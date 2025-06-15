@@ -1,4 +1,8 @@
-# MiSS: Balancing LoRA Performance and Efficiency with Simple Shard Sharing [Paper](https://arxiv.org/pdf/2409.15371)
+
+<h1 style="text-align: center;">MiSS: Balancing LoRA Performance and Efficiency with Simple Shard Sharing </h1>
+[Paper](https://arxiv.org/pdf/2409.15371)
+
+
 ### Old Version: 
 DiSHA: Dimension-Sharding Adaptation of Large Language Models with Fast Convergence and Fast Computation
 Bone: Block-Affine Adaptation of Large Language Models

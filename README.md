@@ -1,47 +1,48 @@
+<div align="center" >
+    <img src="assets/logo.png" height=120 alt="" style="margin-bottom:px"/> 
 
-<h1 style="text-align: center;">MiSS: Balancing LoRA Performance and Efficiency with Simple Shard Sharing </h1>
-[Paper](https://arxiv.org/pdf/2409.15371)
+**MiSS: Balancing LoRA Performance and Efficiency with Simple Shard Sharing**
+
+[![arXiv](https://img.shields.io/badge/arXiv-2409.15371-b31b1b.svg)](https://arxiv.org/abs/2409.15371)
+<a href="https://github.com/huggingface/trl/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/huggingface/trl.svg?color=blue"></a>
+
+[🤗PEFT](https://opencompass.org.cn/) |
+[📑Paper](https://hub.opencompass.org.cn/home) |
+[📘Documentation](https://huggingface.co/docs/peft/main/package_reference/bone) |
+[🛠️Installation](https://huggingface.co/docs/peft/install#source) |
+[❓Issues](https://github.com/JL-er/MiSS/issues/new/choose)
+
+</div>
+
+> \[!IMPORTANT\]
+>
+> **MiSS** is supported by [Huggingface/peft](https://github.com/huggingface/peft.git)
+> 
+> We are still improving **MiSS**, and for the previous versions of the paper please visit [here](https://arxiv.org/abs/2409.15371v1).
 
 
-### Old Version: 
-DiSHA: Dimension-Sharding Adaptation of Large Language Models with Fast Convergence and Fast Computation
-Bone: Block-Affine Adaptation of Large Language Models
-## Introduction
-Low-Rank Adaptation (LoRA) leverages the low intrinsic rank of weight updates in Large Language Models (LLMs), establishing a Parameter-Efficient Fine-Tuning (PEFT) paradigm. However, LoRA suffers from slow convergence. We introduce Dimension-Sharding Adaptation (DiSHA), which expands the PEFT design space to unlock lower intrinsic ranks and faster convergence by default. Within DiSHA's design space, we propose Block Affine Adaptation (Bone), a computationally efficient structure that delivers both high performance and efficiency. While certain DiSHA configurations may result in colinear updates to weight shards, we address this with Block Affine Transformation Adaptation (BAT), a nonlinear variant of DiSHA. BAT introduces nonlinearity by combining trainable matrices with original weight shards in a nonlinear manner, inducing nonlinearity in matrix updates without introducing additional parameters. Empirical results show that Bone, under the DiSHA framework, consistently outperforms LoRA variants in both NLG and NLU tasks, with significantly improved computational efficiency. Further analysis demonstrates that BAT enhances model capabilities by leveraging its nonlinear design.
+MiSS (Matrix Shard Sharing) is a novel Parameter-Efficient Fine-Tuning (PEFT) method designed to address the trade-off between adaptability and efficiency in Large Language Models. The core approach of MiSS involves a simple shard-sharing mechanism. It achieves low-rank adaptation by decomposing a weight matrix into multiple fragments and then utilizing a shared, trainable "common fragment." The final low-rank update matrix is constructed by replicating these shared, partitioned shards.
 
 
 
-### DISHA design space
-<p>
-  <img src="./assets/design.png"/>
-</p>
+## 🚀News
+- **\[2025.06.13\]** Our paper was accepted by ES-Fomo III workshop @ICML2025! 🔥🔥🔥
+- **\[2025.05.16\]** We released a new version of our paper! 🔥🔥🔥
+- **\[2024.09.19\]** Our paper was available on ArXiv! 🔥🔥🔥
 
-### Comparison of Initial Gradients and Convergence Speed
-<p float="left">
-  <img src="./assets/llama2-7b.png" width="45%" />
-  <img src="./assets/grad.png" width="45%"  /> 
-</p>
-
-### Eval
-<p>
-  <img src="./assets/image.png" width="45%"/>
-</p>
-
-## Support by [Huggingface/peft](https://github.com/huggingface/peft.git)
-
-## How to Run
+## 🔧Installation
 ### HF Model
-"PEFT-Bone is currently being merged into the official PEFT repository. In the future, you will only need to run 'pip install peft'
+MiSS is currently being merged into the official PEFT repository. In the future, you will only need to run `pip install peft`
 ```
 git clone https://github.com/huggingface/peft.git
 cd peft
 pip install -e .
 ```
 ```
-git clone https://github.com/JL-er/Bone.git
+git clone https://github.com/JL-er/MiSS.git
 ```
 ```
-cd Bone
+cd MiSS
 sh scripts/run_bone.sh
 ```
 ### RWKV Model
@@ -55,7 +56,7 @@ pip install -r requirements.txt
 sh scripts/run_bone.sh
 sh scripts/merge_bone.sh
 ```
-# Advanced Usage
+### Advanced Usage
 ```
 import torch
 import os
@@ -83,16 +84,35 @@ peft_model.save_pretrained(OUTPUT_DIR)
 tokenizer.save_pretrained(OUTPUT_DIR)
 ```
 
+
+### DISHA design space
+<p>
+  <img src="./assets/design.png"/>
+</p>
+
+### Comparison of Initial Gradients and Convergence Speed
+<p float="left">
+  <img src="./assets/llama2-7b.png" width="45%" />
+  <img src="./assets/grad.png" width="45%"  /> 
+</p>
+
+### Eval
+<p>
+  <img src="./assets/image.png" width="45%"/>
+</p>
+
+
 # Citation
 If you find this repo useful, please consider citing our works:
 # Citation
 ```bib
-@misc{kang2024boneblockaffineadaptationlarge,
-      title={Bone: Block-Affine Adaptation of Large Language Models}, 
-      author={Jiale Kang},
-      year={2024},
+@misc{kang2025balancingloraperformanceefficiency,
+      title={Balancing LoRA Performance and Efficiency with Simple Shard Sharing}, 
+      author={Jiale Kang and Qingyu Yin},
+      year={2025},
       eprint={2409.15371},
       archivePrefix={arXiv},
       primaryClass={cs.CL},
       url={https://arxiv.org/abs/2409.15371}, 
 }
+```

@@ -6,8 +6,8 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2409.15371-b31b1b.svg)](https://arxiv.org/abs/2409.15371)
 <a href="https://github.com/huggingface/trl/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/huggingface/trl.svg?color=blue"></a>
 
-[🤗PEFT](https://opencompass.org.cn/) |
-[📑Paper](https://hub.opencompass.org.cn/home) |
+[🤗PEFT](https://github.com/huggingface/peft/tree/main/src/peft/tuners/bone) |
+[📑Paper](https://arxiv.org/abs/2409.15371) |
 [📘Documentation](https://huggingface.co/docs/peft/main/package_reference/bone) |
 [🛠️Installation](https://huggingface.co/docs/peft/install#source) |
 [❓Issues](https://github.com/JL-er/MiSS/issues/new/choose)

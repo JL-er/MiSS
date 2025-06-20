@@ -18,9 +18,9 @@
 >
 > **MiSS** is supported by [Huggingface/peft](https://github.com/huggingface/peft.git)
 > 
->Old name(Bone->DiSHA->MiSS)
+>Version(Bone->DiSHA->MiSS)
 >
-> We are still improving **MiSS**, and for the previous versions of the paper please visit [here](https://arxiv.org/abs/2409.15371v1).
+> We are still improving **MiSS**
 
 
 MiSS (Matrix Shard Sharing) is a novel Parameter-Efficient Fine-Tuning (PEFT) method designed to address the trade-off between adaptability and efficiency in Large Language Models. The core approach of MiSS involves a simple shard-sharing mechanism. It achieves low-rank adaptation by decomposing a weight matrix into multiple fragments and then utilizing a shared, trainable "common fragment." The final low-rank update matrix is constructed by replicating these shared, partitioned shards.

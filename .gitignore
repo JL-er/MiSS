@@ -1,6 +1,5 @@
-Bone/__pycache__/
-Bone/wandb/
 Bonesrc/__pycache__/
 llama/__pycache__/
 llama/wandb/
 __pycache__/
+wandb/

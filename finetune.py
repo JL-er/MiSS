@@ -12,7 +12,7 @@ from transformers import Trainer, BitsAndBytesConfig
 from datasets import load_dataset
 import datasets
 import numpy as np
-from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training, PeftModel, BoneConfig
+from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training, PeftModel, BoneConfig, LoraRuntimeConfig
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 
 
@@ -35,6 +35,7 @@ class TrainingArguments(transformers.TrainingArguments):
     use_lora : Optional[bool] = field(default=False)
     adapter_name_or_path: Optional[str] = field(default=None,metadata={"help": ("Pre-initialized PiSSA adapter path; when this is not None, the following arguments are ignored."),},)
     init_lora_weights: Literal[True, "pissa_niter_4", "olora"] = field(default=True,metadata={"help": ("True -> LoRA; `pissa` -> PiSSA"),},)
+    use_dora : Optional[bool] = field(default=False)
     target_modules : Optional[str] = field(default="q_proj,v_proj,k_proj,o_proj,gate_proj,down_proj,up_proj")
     lora_rank : Optional[int] = field(default=8)
     lora_alpha : Optional[float] = field(default=32.)
@@ -68,7 +69,7 @@ class SavePeftModelCallback(transformers.TrainerCallback):
 
         peft_model_path = os.path.join(checkpoint_folder, "adapter_model")
         kwargs["model"].save_pretrained(peft_model_path)
-        kwargs["tokenizer"].save_pretrained(peft_model_path)
+        # kwargs["tokenizer"].save_pretrained(peft_model_path)
 
     def on_save(self, args, state, control, **kwargs):
         self.save_model(args, state, kwargs)
@@ -201,6 +202,8 @@ def build_model(script_args, checkpoint_dir):
         else:
             logger.info(f'Init LoRA modules...')
             peft_config = LoraConfig(
+                use_dora=script_args.use_dora,
+                runtime_config=LoraRuntimeConfig(ephemeral_gpu_offload=script_args.use_dora),
                 task_type=TaskType.CAUSAL_LM,
                 target_modules=script_args.target_modules.split(','),
                 inference_mode=False,

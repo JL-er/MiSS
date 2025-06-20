@@ -1,25 +1,27 @@
-BASE_MODEL="/home/rwkv/JL/model/Gemma-2B"
-OUTPUT_PATH="/home/rwkv/JL/out_model/Gemma-meta-2btest"
-DATA_PATH="/home/rwkv/JL/model/MetaMathQA"
+BASE_MODEL="/home/rwkv/model/qwen3-4b"
+OUTPUT_PATH="/home/rwkv/JL/out_model/qwen3-code-dora"
+DATA_PATH=/home/rwkv/JL/data/code
+
 
 # batch size = per_device_train_batch_size * gradient_accumulation_steps * num_gpus = 128
-deepspeed --include=localhost:0 bone.py \
+deepspeed --include=localhost:0,1,2,3 finetune.py \
     --deepspeed configs/ds_config_zero2_no_offload.json \
     --model_name_or_path $BASE_MODEL \
     --use_lora True \
+    --use_dora True \
     --init_lora_weights True \
     --target_modules "q_proj,v_proj,k_proj,o_proj,gate_proj,down_proj,up_proj" \
-    --lora_rank 32 \
-    --lora_alpha 32 \
+    --lora_rank 36 \
+    --lora_alpha 72 \
     --lora_dropout 0 \
     --data_path $DATA_PATH \
-    --dataset_field query response \
-    --dataset_split "train[:395000]"\
+    --dataset_field query answer \
+    --dataset_split "train"\
     --output_dir $OUTPUT_PATH \
     --num_train_epochs 1 \
     --model_max_length 512 \
     --per_device_train_batch_size 2 \
-    --gradient_accumulation_steps 16 \
+    --gradient_accumulation_steps 8 \
     --save_strategy "steps" \
     --save_steps 1000 \
     --save_total_limit 2 \
@@ -30,4 +32,4 @@ deepspeed --include=localhost:0 bone.py \
     --lr_scheduler_type "cosine" \
     --report_to "wandb" \
     --merge True \
-    --run_name "lora"
+    --run_name "dora"

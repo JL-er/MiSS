@@ -18,17 +18,21 @@
 >
 > **MiSS** is supported by [Huggingface/peft](https://github.com/huggingface/peft.git)
 > 
+>Old name(Bone->DiSHA->MiSS)
+>
 > We are still improving **MiSS**, and for the previous versions of the paper please visit [here](https://arxiv.org/abs/2409.15371v1).
 
 
 MiSS (Matrix Shard Sharing) is a novel Parameter-Efficient Fine-Tuning (PEFT) method designed to address the trade-off between adaptability and efficiency in Large Language Models. The core approach of MiSS involves a simple shard-sharing mechanism. It achieves low-rank adaptation by decomposing a weight matrix into multiple fragments and then utilizing a shared, trainable "common fragment." The final low-rank update matrix is constructed by replicating these shared, partitioned shards.
 
 
-
 ## 🚀News
 - **\[2025.06.13\]** Our paper was accepted by ES-Fomo III workshop @ICML2025! 🔥🔥🔥
-- **\[2025.05.16\]** We released a new version of our paper! 🔥🔥🔥
-- **\[2024.09.19\]** Our paper was available on ArXiv! 🔥🔥🔥
+- **\[2025.05.16\]** We released a new version of our paper!(MiSS) 🔥🔥🔥
+- **\[2024.12.31\]** We released a new version of our paper!(DiSHA) 🔥🔥🔥
+- **\[2024.11.05\]** Merged into the Hugging Face PEFT repo! 🔥🔥🔥
+- **\[2024.09.19\]** Our paper was available on ArXiv!(Bone) 🔥🔥🔥
+- **\[2024.08.07\]** First proposed the Bone method! 🔥🔥🔥
 
 ## 🔧Installation
 ### HF Model
@@ -43,7 +47,7 @@ git clone https://github.com/JL-er/MiSS.git
 ```
 ```
 cd MiSS
-sh scripts/run_bone.sh
+sh scripts/run_miss.sh
 ```
 ### RWKV Model
 ```
@@ -83,23 +87,60 @@ peft_model.save_pretrained(OUTPUT_DIR)
 # Save the tokenizer:
 tokenizer.save_pretrained(OUTPUT_DIR)
 ```
-
-
-### DISHA design space
 <p>
-  <img src="./assets/design.png"/>
+  <img src="./assets/from.png"/>
 </p>
 
-### Comparison of Initial Gradients and Convergence Speed
-<p float="left">
-  <img src="./assets/llama2-7b.png" width="45%" />
-  <img src="./assets/grad.png" width="45%"  /> 
-</p>
 
-### Eval
+|Metohd|Space|Time|
+|:--------------:|:--------------:|:--------------:|
+|Full |O(dk) |O(bld(d + k))
+|LoRA |O(dr + rk) |O(blr(d + k))
+|MISS |O(dr) |O(bldk)
+|MISS_e |O(dr)| O(blr(d +kr))
+
+### PEFT Arena
 <p>
-  <img src="./assets/image.png" width="45%"/>
+  <img src="./assets/peft-compare.png"/>
 </p>
+
+<details>
+<summary>🔍 <b>Bat: Block Affine Transformation</b> </summary>
+We conducted extensive experiments on both NLU and NLG tasks to validate the effectiveness of Bone. It outperforms many LoRA variants and surpasses LoRA in terms of memory consumption and computational efficiency.
+However, we found that Bone results in the updates between different shards within the same matrix being collinear. Specifically, all shards in the weights use the same trainable matrix for updates, causing the updates of all shards to be collinear, restricting the model’s expressive power. To address the issue of linear correlation among shard updates, our initial idea was to use a trainable coefficient matrix to control the updates of different shards. However, this approach would increase additional parameters.
+
+Inspired by methods like PiSSA that leverage pre-trained weight matrix information, we propose \textbf{Block Affine Transformation (Bat)} to break update collinearity without adding parameters. The key insight is to leverage pre-trained weights $\mathbf{W}_0$ as nonlinear projectors:  
+
+1. \textbf{Tensor Factorization}:  
+
+   \textbullet\  Reshape $\mathbf{W}_0 \in \mathbb{R}^{d \times k}$ into 4D tensor $\mathcal{W}_0 \in \mathbb{R}^{\frac{k}{r} \times \frac{d}{r} \times r \times r}$  
+   
+   \textbullet\  Reshape $\mathbf{D} \in \mathbb{R}^{r \times d}$ into $\mathcal{D} \in \mathbb{R}^{\frac{d}{r} \times r \times r}$  
+
+2. \textbf{Affine Transformation}:  
+   Compute shard-specific updates via tensor contraction:  
+   \[
+   \Delta \mathcal{W} = \mathcal{W}_0 \times \mathcal{D} + \mathcal{D} \quad \in \mathbb{R}^{\frac{k}{r} \times \frac{d}{r} \times r \times r}  
+   \]  
+   where $\times_3$ denotes contraction along the third dimension.  
+
+3. \textbf{Reconstruction}:  
+   Reshape $\Delta \mathcal{W}$ to obtain full update matrix:  
+   \[
+   \Delta \mathbf{W} = \operatorname{Reshape}(\Delta \mathcal{W}) \in \mathbb{R}^{d \times k}  
+   \]  
+Bat allows for flexible configuration of different dimensional transformation strategies based on the settings of $\mathbf{D}$. For example: 
+
+Bat-Row:  
+  Reshape $\mathbf{W}_0$ into $\mathcal{W} \in \mathbb{R}^{\frac{d}{r} \times \frac{k}{r} \times r \times r}$ and $\mathbf{D} \in \mathbb{R}^{r \times k}$ into $\mathcal{D} \in \mathbb{R}^{\frac{k}{r} \times r \times r}$
+  
+Bat-Col:  
+    Reshape $\mathbf{W}_0$ into $\mathcal{W} \in \mathbb{R}^{\frac{k}{r} \times \frac{d}{r} \times r \times r}$ and $\mathbf{D} \in \mathbb{R}^{r \times d}$ into $\mathcal{D} \in \mathbb{R}^{\frac{d}{r} \times r \times r}$
+
+The term $\mathcal{W}_0 \times \mathcal{D}$ introduces shard-dependent perturbations proportional to $\mathbf{W}_0$'s singular vectors, breaking the collinearity enforced by Bone's shared $\mathbf{D}$.
+
+
+</details>
 
 
 # Citation

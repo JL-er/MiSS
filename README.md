@@ -18,7 +18,7 @@
 >
 > **MiSS** is supported by [Huggingface/peft](https://github.com/huggingface/peft.git)
 > 
->Version(Bone->DiSHA->MiSS)
+>Paper Version(Bone->DiSHA->MiSS)
 >
 > We are still improving **MiSS**
 

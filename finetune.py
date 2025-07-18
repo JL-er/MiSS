@@ -12,7 +12,7 @@ from transformers import Trainer, BitsAndBytesConfig
 from datasets import load_dataset
 import datasets
 import numpy as np
-from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training, PeftModel, BoneConfig, LoraRuntimeConfig
+from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training, PeftModel, MissConfig, LoraRuntimeConfig
 from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 
 
@@ -54,9 +54,12 @@ class TrainingArguments(transformers.TrainingArguments):
     merge : Optional[bool] = field(default=False,metadata={"help": "Merge the PiSSA adapter to the residual model or LoRA to the base model"},)
     bf16: Optional[bool] = field(default=True)
     run_name: str= field(default='None', metadata={"help": "Path to the training data."})
-    use_bone: Optional[bool] = field(default=False)
-    bone_r: Optional[int] = field(default=64)
-    init_bone_weights: Literal[True, False] = field(default=True)
+    use_miss: Optional[bool] = field(default=False)
+    miss_r: Optional[int] = field(default=64)
+    miss_mini_r: Optional[int] = field(default=8)
+    init_miss_weights: Literal[True, "bat", "mini"] = field(default=True)
+    miss_dropout: Optional[float] = field(default=0.)
+
 
 
 class SavePeftModelCallback(transformers.TrainerCallback):
@@ -160,7 +163,7 @@ def train_tokenize_function(examples, tokenizer, query, response):
     return data_dict
 
 def build_model(script_args, checkpoint_dir):
-    #if not script_args.use_lora and not script_args.use_bone: assert script_args.bits in [16, 32]
+    #if not script_args.use_lora and not script_args.use_miss: assert script_args.bits in [16, 32]
     compute_dtype = (torch.bfloat16 if script_args.bf16 else torch.float32)
     model = transformers.AutoModelForCausalLM.from_pretrained(
         script_args.model_name_or_path,
@@ -213,23 +216,16 @@ def build_model(script_args, checkpoint_dir):
                 init_lora_weights=script_args.init_lora_weights,
             )
             model = get_peft_model(model, peft_config)
-    if script_args.use_bone:
-        # if checkpoint_dir is not None:
-        #     logger.info(f"Loading adapters from {checkpoint_dir}.")
-        #     # os.path.join(checkpoint_dir, 'adapter_model')
-        #     model = PeftModel.from_pretrained(model, checkpoint_dir, is_trainable=True)
-        # elif script_args.adapter_name_or_path is not None:
-        #     logger.info(f"Initilize adapters from {script_args.model_name_or_path}/{script_args.adapter_name_or_path}.")
-        #     bone_config = BoneConfig.from_pretrained(script_args.model_name_or_path, subfolder = script_args.adapter_name_or_path)
-        #     model = PeftModel.from_pretrained(model, script_args.model_name_or_path, subfolder = script_args.adapter_name_or_path, is_trainable=True, config=bone_config)
-        # else:
-        #     logger.info(f'Init LoRA modules...')
-        peft_config = BoneConfig(
+    if script_args.use_miss:
+
+        peft_config = MissConfig(
             task_type=TaskType.CAUSAL_LM,
             target_modules=script_args.target_modules.split(','),
             inference_mode=False,
-            r=script_args.bone_r, 
-            init_weights=script_args.init_bone_weights,
+            r=script_args.miss_r, 
+            mini_r=script_args.miss_mini_r, 
+            miss_dropout=script_args.miss_dropout, 
+            init_weights=script_args.init_miss_weights,
         )
         model = get_peft_model(model, peft_config, adapter_name='weight')
 
@@ -309,7 +305,7 @@ def train():
         model = model.merge_and_unload()
         model.save_pretrained(script_args.output_dir)
         tokenizer.save_pretrained(script_args.output_dir)
-    if not script_args.use_lora and not script_args.use_bone:
+    if not script_args.use_lora and not script_args.use_miss:
         safe_save_model_for_hf_trainer(trainer=trainer, output_dir=script_args.output_dir)
         
 
